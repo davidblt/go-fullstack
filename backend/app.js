@@ -1,9 +1,24 @@
 const express = require('express');
+const mongoose = require('mongoose'); // package qui facilite les interactions avec MongoDB
 
+// céation de l'application avec express()
 const app = express();
 
+// Variables d'environnement : permet de ne pas révéler les infos confidentielles.
+const dotenv = require('dotenv');
+dotenv.config();
+
+// Connection à la base de données MongoDB avec mongoose :
+mongoose
+	.connect(
+		`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.ebbffex.mongodb.net/?retryWrites=true&w=majority`,
+		{ useNewUrlParser: true, useUnifiedTopology: true }
+	)
+	.then(() => console.log('Connexion à MongoDB réussie !'))
+	.catch(() => console.log('Connexion à MongoDB échouée !'));
+
 // Middleware qui intercepte toutes les requêtes qui contiennent du JSON et met à disposition ce contenu dans req.body
-app.use(express.json())
+app.use(express.json());
 
 /*
 Middleware CORS (Cross Origin Resource Sharing).
@@ -28,10 +43,8 @@ app.post('/api/stuff', (req, res, next) => {
 	console.log(req.body);
 	res.status(201).json({
 		message: 'Objet créé !',
-    });
-    
+	});
 });
-
 
 // requête GET
 app.get('/api/stuff', (req, res, next) => {
