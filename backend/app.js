@@ -1,6 +1,8 @@
 const express = require('express'); // framework basé sur Node.JS
 const mongoose = require('mongoose'); // package qui facilite les interactions avec MongoDB
 
+const Thing = require('./models/Thing');
+
 // création de l'application avec express()
 const app = express();
 
@@ -40,35 +42,49 @@ app.use((req, res, next) => {
 
 // requête POST
 app.post('/api/stuff', (req, res, next) => {
-	console.log(req.body);
-	res.status(201).json({
-		message: 'Objet créé !',
+	delete req.body._id; // supprime car MongoDB en attribut déjà un.
+	const thing = new Thing({
+		// nouvelle instance du modele.
+		...req.body, // spread operator qui copie tous les champs du body.
 	});
+	thing
+		.save() // enregistre dans la base de données.
+		.then(() => res.status(201).json({ message: 'Objet enregistré !' }))
+		.catch((error) => res.status(400).json({ error }));
 });
 
-// requête GET
+// Requête GET pour retourner tous les objets avec find()
 app.get('/api/stuff', (req, res, next) => {
-	const stuff = [
-		{
-			_id: 'oeihfzeoi',
-			title: 'Appareil photo Ricoh',
-			description: 'Les infos de mon premier objet',
-			imageUrl:
-				'https://cdn.pixabay.com/photo/2015/06/18/15/20/old-813814_960_720.jpg',
-			price: 49000,
-			userId: 'qsomihvqios',
-		},
-		{
-			_id: 'oeihfzeomoihi',
-			title: 'Appareil photo',
-			description: 'Les infos de mon deuxième objet',
-			imageUrl:
-				'https://cdn.pixabay.com/photo/2018/01/28/21/14/lens-3114729_960_720.jpg',
-			price: 29000,
-			userId: 'qsomihvqios',
-		},
-	];
-	res.status(200).json(stuff);
+	Thing.find()
+		.then((things) => res.status(200).json(things))
+		.catch((error) => res.status(400).json({ error }));
+});
+
+/*
+Requête GET pour retourner un seul objet avec findOne().
+La route inclut le paramètre dynamique de l'id avec /:id
+*/
+app.get('/api/stuff/:id', (req, res, next) => {
+	Thing.findOne({ _id: req.params.id })
+		.then((thing) => res.status(200).json(thing))
+		.catch((error) => res.status(404).json({ error }));
+});
+
+/*
+Requête PUT pour modifier un objet avec updateOne().
+La route reprend le parametre dynamique et on compare les id pour s'assurer que c'est bien l'objet voulu.
+*/
+app.put('/api/stuff/:id', (req, res, next) => {
+	Thing.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id })
+		.then(() => res.status(200).json({ message: 'Objet modifié !' }))
+		.catch((error) => res.status(400).json({ error }));
+});
+
+// Requête DELETE pour supprimer un objet avec deleteOne().
+app.delete('/api/stuff/:id', (req, res, next) => {
+	Thing.deleteOne({ _id: req.params.id })
+		.then(() => res.status(200).json({ message: 'Objet supprimé !' }))
+		.catch((error) => res.status(400).json({ error }));
 });
 
 module.exports = app;
