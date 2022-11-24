@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require('express'); // framework basé sur Node.JS
 const mongoose = require('mongoose'); // package qui facilite les interactions avec MongoDB
 
-// céation de l'application avec express()
+// création de l'application avec express()
 const app = express();
 
 // Variables d'environnement : permet de ne pas révéler les infos confidentielles.
@@ -14,8 +14,8 @@ mongoose
 		`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.ebbffex.mongodb.net/?retryWrites=true&w=majority`,
 		{ useNewUrlParser: true, useUnifiedTopology: true }
 	)
-	.then(() => console.log('Connexion à MongoDB réussie !'))
-	.catch(() => console.log('Connexion à MongoDB échouée !'));
+	.then(() => console.log('Connection to MongoDB successful'))
+	.catch(() => console.log('Connection to MongoDB failed'));
 
 // Middleware qui intercepte toutes les requêtes qui contiennent du JSON et met à disposition ce contenu dans req.body
 app.use(express.json());
