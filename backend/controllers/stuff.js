@@ -1,4 +1,4 @@
-const Thing = require('../routes/stuff');
+const Thing = require('../models/Thing');
 
 // Requête POST pour créer un objet.
 exports.createThing = (req, res, next) => {

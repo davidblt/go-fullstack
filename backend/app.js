@@ -1,6 +1,7 @@
 const express = require('express'); // framework basé sur Node.JS
 const mongoose = require('mongoose'); // package qui facilite les interactions avec MongoDB
 const stuffRoutes = require('./routes/stuff');
+const userRoutes = require('./routes/user');
 
 // création de l'application avec express()
 const app = express();
@@ -41,5 +42,7 @@ app.use((req, res, next) => {
 
 // Pour la route '/api/stuff', on applique la logique du router.
 app.use('/api/stuff', stuffRoutes);
+// Route pour l'authentification
+app.use('api/auth', userRoutes);
 
 module.exports = app;
