@@ -22,7 +22,7 @@ exports.createThing = (req, res, next) => {
 		// Il faut générer l'URL de l'image par nous-même car multer ne passe que le nom de fichier.
 		imageUrl: `${req.protocol}://${req.get('host')}/images/${
 			req.file.filename
-		}`
+		}`,
 	});
 	thing
 		.save() // enregistre dans la base de données.
@@ -49,14 +49,43 @@ exports.getOneThing = (req, res, next) => {
 
 /*
 Requête PUT pour modifier un objet avec updateOne().
-La route reprend le parametre dynamique et on compare les id pour s'assurer que c'est bien l'objet voulu.
+La route reprend le paramètre dynamique :id et on compare les id pour s'assurer que c'est bien l'objet voulu.
+
+Il faut gérer 2 situations selon qu'il y a un fichier ou non à la requête.
+Pour le savoir, il suffit de regarder s'il y a un champs 'file' dans la requête (req.file).
 */
 exports.modifyThing = (req, res, next) => {
-	Thing.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id })
-		.then(() =>
-			res.status(200).json({ message: 'Thing modified successfully' })
-		)
-		.catch((error) => res.status(400).json({ error }));
+	/*
+	Fonction ternaire : s'il y a req.file alors on parse pour passer d'une string à un objet JS exploitable.
+	Sinon, on récupère simplement le corps de la requête.
+	*/
+	const thingObject = req.file
+		? {
+				...JSON.parse(req.body.thing),
+				imageUrl: `${req.protocol}://${req.get('host')}/images/${
+					req.file.filename
+				}`,
+		  }
+		: { ...req.body };
+
+	// Ensuite on supprime l'id par sécurité.
+	delete thingObject._userId;
+
+	// Enfin, il faut chercher cet objet dans la base de données pour vérifier qu'il appartient bien à l'utilisateur.
+	Thing.findOne({ _id: req.params.id })
+		.then((thing) => {
+			if (thing.userId != req.auth.userId) {
+				res.status(400).json({ message: 'Not authrized' });
+			} else {
+				Thing.updateOne(
+					{ id: req.params.id },
+					{ ...thingObject, _id: req.params.id }
+				)
+					.then(() => res.status(200).json({ message: 'Object updated' }))
+					.catch((error) => res.status(401).json({ error }));
+			}
+		})
+		.catch((error) => res.status(500).json({ error }));
 };
 
 // Requête DELETE pour supprimer un objet avec deleteOne().
