@@ -2,6 +2,7 @@ const express = require('express'); // framework basé sur Node.JS
 const mongoose = require('mongoose'); // package qui facilite les interactions avec MongoDB
 const userRoutes = require('./routes/user');
 const stuffRoutes = require('./routes/stuff');
+const path = require('path'); // Permet d'accéder au path du serveur
 
 // Création de l'application avec express()
 const app = express();
@@ -40,8 +41,12 @@ app.use((req, res, next) => {
 	next();
 });
 
+// Indique à Express qu'il faut gérer la ressource 'images' de manière statique (un sous-répertoire de notre répertoire de base, __dirname) à chaque fois qu'elle reçoit une requête vers la route /images.
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
 // Route pour l'authentification
 app.use('/api/auth', userRoutes);
+
 // Pour la route '/api/stuff', on applique la logique du router.
 app.use('/api/stuff', stuffRoutes);
 
