@@ -1,4 +1,5 @@
 const Thing = require('../models/Thing');
+const fs = require('fs'); // Permt d'interagir avec le système de fichiers du serveur.
 
 // Requête POST pour créer un objet.
 exports.createThing = (req, res, next) => {
@@ -65,7 +66,7 @@ exports.modifyThing = (req, res, next) => {
 				imageUrl: `${req.protocol}://${req.get('host')}/images/${
 					req.file.filename
 				}`,
-		  }
+		}
 		: { ...req.body };
 
 	// Ensuite on supprime l'id par sécurité.
@@ -88,9 +89,31 @@ exports.modifyThing = (req, res, next) => {
 		.catch((error) => res.status(500).json({ error }));
 };
 
-// Requête DELETE pour supprimer un objet avec deleteOne().
+/*
+Requête DELETE pour supprimer un objet avec deleteOne().
+Suppression uniquement si l'objet appartien à l'utilisateur.
+*/
 exports.deleteThing = (req, res, next) => {
-	Thing.deleteOne({ _id: req.params.id })
-		.then(() => res.status(200).json({ message: 'Thing deleted' }))
-		.catch((error) => res.status(400).json({ error }));
+	// On commence par récupérer l'objet en base de données :
+	Thing.findOne({ _id: req.params.id })
+		.then((thing) => {
+			// Ensuite vérifier le propriétaire
+			if (thing.userId != req.auth.userId) {
+				res.status(401).json({ message: 'Not authorized' });
+			} else {
+				/*
+				Si c'est le bon utilisateur, il faut supprimer l'objet ET l'image.
+				Pour retrouver l'image, on recrée son chemin.
+				*/
+				const filename = thing.imageUrl.split('/images/')[1];
+
+				// unlink() du package fs permet de supprimer un fichier du système de fichiers.
+				fs.unlink(`images/${filename}`, () => {
+					Thing.deleteOne({ _id: req.params.id })
+						.then(() => res.status(200).json({ message: 'Object deleted' }))
+						.catch((error) => res.status(401).json({ error }));
+				});
+			}
+		})
+		.catch((error) => res.status(500).json({ error }));
 };
