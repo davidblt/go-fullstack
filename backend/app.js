@@ -11,6 +11,10 @@ const app = express();
 const dotenv = require('dotenv');
 dotenv.config();
 
+// helmet permet de sécuriser l'application Express avec différents headers
+const helmet = require('helmet');
+app.use(helmet());
+
 // Connection à la base de données MongoDB avec mongoose :
 mongoose
 	.connect(
@@ -30,6 +34,9 @@ Pas d'adresse car appliqué à toutes les routes.
 */
 app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Origin', '*');
+
+	// Ajout header avec helmet
+	res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
 	res.setHeader(
 		'Access-Control-Allow-Headers',
 		'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization'
